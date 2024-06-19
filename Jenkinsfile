@@ -63,13 +63,6 @@ pipeline {
                         sh "docker push ${env.IMAGE_NAME}:version-${newVersion}"
                         sh "docker push ${env.IMAGE_NAME}:${commitHash}"
                 }
-            //     script {
-            //         withDockerRegistry([credentialsId: env.DOCKER_CREDENTIALS_ID]) {
-            //             sh "docker push ${env.IMAGE_NAME}:latest"
-            //             sh "docker push ${env.IMAGE_NAME}:version-${newVersion}"
-            //             sh "docker push ${env.IMAGE_NAME}:${commitHash}"
-            //         }
-            //     }
             }
         }
 
