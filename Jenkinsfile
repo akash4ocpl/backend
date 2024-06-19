@@ -47,6 +47,10 @@ pipeline {
                     // Build Docker image with 'latest' tag and version tag
                     echo "Building Docker image with tags: latest, version-${newVersion}, ${commitHash}"
                     sh "docker build -t ${env.IMAGE_NAME}:latest -t ${env.IMAGE_NAME}:version-${newVersion} -t ${env.IMAGE_NAME}:${commitHash} ."
+
+                    // Set newVersion environment variable to be used in the next stages
+                    env.NEW_VERSION = newVersion.toString()
+                    env.COMMIT_HASH = commitHash.toString()
                 }
             }
         }
@@ -63,8 +67,8 @@ pipeline {
 
                         // Push the Docker image to DockerHub
                         sh "docker push ${env.IMAGE_NAME}:latest"
-                        sh "docker push ${env.IMAGE_NAME}:version-${newVersion}"
-                        sh "docker push ${env.IMAGE_NAME}:${commitHash}"
+                        sh "docker push ${env.IMAGE_NAME}:version-${env.NEW_VERSION}"
+                        sh "docker push ${env.IMAGE_NAME}:${env.COMMIT_HASH}"
 
                         echo "Docker images pushed successfully"
                     } catch (Exception e) {
@@ -74,7 +78,6 @@ pipeline {
                 }
             }
         }
-
 
         stage('Deploy to Kubernetes') {
             steps {
@@ -110,7 +113,7 @@ pipeline {
                 // Safely remove images if they exist
                 sh "docker rmi ${env.IMAGE_NAME}:latest || true"
                 sh "docker rmi ${env.IMAGE_NAME}:${commitHash} || true"
-                sh "docker rmi ${env.IMAGE_NAME}:version-${newVersion} || true"
+                sh "docker rmi ${env.IMAGE_NAME}:version-${env.NEW_VERSION} || true"
             }
         }
     }
