@@ -70,7 +70,7 @@ pipeline {
             //             sh "docker push ${env.IMAGE_NAME}:${commitHash}"
             //         }
             //     }
-            // }
+            }
         }
 
         stage('Deploy to Kubernetes') {
