@@ -42,9 +42,9 @@ pipeline {
                     echo "New Version: ${newVersion}"
 
                     // Build Docker image with 'latest' tag and version tag
-                    echo "error here 6"
+                    echo "Building Docker image with tags: latest, version-${newVersion}, ${commitHash}"
+                    sh "ls -la"
                     sh "docker build -t ${env.IMAGE_NAME}:latest -t ${env.IMAGE_NAME}:version-${newVersion} -t ${env.IMAGE_NAME}:${commitHash} ."
-                    echo "error here 5"
                 }
             }
         }
@@ -53,13 +53,9 @@ pipeline {
             steps {
                 script {
                     withDockerRegistry([credentialsId: env.DOCKER_CREDENTIALS_ID, url: '']) {
-                        echo "error here"
                         sh "docker push ${env.IMAGE_NAME}:latest"
-                        echo "error here 2"
                         sh "docker push ${env.IMAGE_NAME}:version-${newVersion}"
-                        echo "error here 3"
                         sh "docker push ${env.IMAGE_NAME}:${commitHash}"
-                        echo "error here 4"
                     }
                 }
             }
