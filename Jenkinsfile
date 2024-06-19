@@ -55,8 +55,8 @@ pipeline {
             steps {
                 script {
                     // Login to DockerHub using credentials
-                    withCredentials([usernamePassword(credentialsId: '1234567890987654321', passwordVariable: 'OcplTech666@', usernameVariable: 'akash4ocpl')]) {
-                        sh 'echo OcplTech666@ | docker login -u akash4ocpl --password-stdin'
+                    withCredentials([usernamePassword(credentialsId: '1234567890987654321', passwordVariable: 'DOCKERHUB_PASSWORD', usernameVariable: 'DOCKERHUB_USERNAME')]) {
+                        sh 'echo $DOCKERHUB_PASSWORD | docker login -u $DOCKERHUB_USERNAME --password-stdin'
                     }
                     // Push the Docker image to DockerHub
                         sh "docker push ${env.IMAGE_NAME}:latest"
