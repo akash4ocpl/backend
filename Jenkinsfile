@@ -8,7 +8,7 @@ pipeline {
         DOCKER_CREDENTIALS_ID = '1234567890987654321' // ID used in Jenkins
         GITHUB_CREDENTIALS_ID = '1234567890987654321' // GitHub credentials ID
         KUBECONFIG_CREDENTIALS_ID = 'kubeconfig-credentials' // ID used in Jenkins
-        NAMESPACE = 'backend' // Kubernetes namespace    }
+        NAMESPACE = 'backend' // Kubernetes namespace
 
     stages {
         stage('Checkout') {
@@ -69,22 +69,6 @@ pipeline {
                         """
 
                         // Apply Kubernetes deployment and service files
-                        sh """
-                        kubectl apply -f deployment.yml
-                        kubectl apply -f service.yml
-                        """
-                    }
-                }
-            }
-        }
-
-        stage('Deploy to Kubernetes') {
-            steps {
-                script {
-                    withCredentials([file(credentialsId: env.KUBECONFIG_CREDENTIALS_ID, variable: 'KUBECONFIG')]) {
-                        sh 'echo "KUBECONFIG contents:"'
-                        sh 'cat $KUBECONFIG'
-                        sh 'kubectl get nodes'
                         sh """
                         kubectl apply -f deployment.yml
                         kubectl apply -f service.yml
