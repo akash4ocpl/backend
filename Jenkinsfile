@@ -5,7 +5,7 @@ pipeline {
         REGISTRY = 'akash4ocpl'
         REPOSITORY = 'backend'
         IMAGE_NAME = "${env.REGISTRY}/${env.REPOSITORY}"
-        DOCKER_CREDENTIALS_ID = 'docker-hub-credentials' // ID used in Jenkins
+        DOCKER_CREDENTIALS_ID = '1234567890987654321' // ID used in Jenkins
         GITHUB_CREDENTIALS_ID = '1234567890987654321' // GitHub credentials ID
         KUBECONFIG_CREDENTIALS_ID = 'kubeconfig-credentials' // ID used in Jenkins
     }
