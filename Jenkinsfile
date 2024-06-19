@@ -8,7 +8,7 @@ pipeline {
         DOCKER_CREDENTIALS_ID = '1234567890987654321' // ID used in Jenkins
         GITHUB_CREDENTIALS_ID = '1234567890987654321' // GitHub credentials ID
         KUBECONFIG_CREDENTIALS_ID = 'kubeconfig-credentials' // ID used in Jenkins
-    }
+        NAMESPACE = 'backend' // Kubernetes namespace    }
 
     stages {
         stage('Checkout') {
@@ -55,25 +55,24 @@ pipeline {
             }
         }
 
-        stage('Push Docker Image') {
+        stage('Deploy to Kubernetes') {
             steps {
                 script {
-                    try {
-                        // Login to DockerHub using credentials
-                        withCredentials([usernamePassword(credentialsId: env.DOCKER_CREDENTIALS_ID, passwordVariable: 'DOCKERHUB_PASSWORD', usernameVariable: 'DOCKERHUB_USERNAME')]) {
-                            sh 'echo $DOCKERHUB_PASSWORD | docker login -u $DOCKERHUB_USERNAME --password-stdin'
-                        }
-                        echo "Docker login successful"
+                    withCredentials([file(credentialsId: env.KUBECONFIG_CREDENTIALS_ID, variable: 'KUBECONFIG')]) {
+                        sh 'echo "KUBECONFIG contents:"'
+                        sh 'cat $KUBECONFIG'
+                        sh 'kubectl get nodes'
 
-                        // Push the Docker image to DockerHub
-                        sh "docker push ${env.IMAGE_NAME}:latest"
-                        sh "docker push ${env.IMAGE_NAME}:version-${env.NEW_VERSION}"
-                        sh "docker push ${env.IMAGE_NAME}:${env.COMMIT_HASH}"
+                        // Create namespace if it doesn't exist
+                        sh """
+                        kubectl get namespace ${env.NAMESPACE} || kubectl create namespace ${env.NAMESPACE}
+                        """
 
-                        echo "Docker images pushed successfully"
-                    } catch (Exception e) {
-                        echo "Error during Docker image push: ${e.message}"
-                        throw e
+                        // Apply Kubernetes deployment and service files
+                        sh """
+                        kubectl apply -f deployment.yml
+                        kubectl apply -f service.yml
+                        """
                     }
                 }
             }
