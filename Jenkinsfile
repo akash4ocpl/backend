@@ -41,10 +41,20 @@ pipeline {
                     }
                     echo "New Version: ${newVersion}"
 
+                    // List files to debug the Dockerfile location
+                    sh "ls -la"
+                    sh "ls -la docker/"
+
+                    // Check if Dockerfile exists
+                    def dockerfilePath = "Dockerfile"
+                    if (!fileExists(dockerfilePath)) {
+                        dockerfilePath = "docker/Dockerfile"
+                    }
+                    echo "Using Dockerfile at path: ${dockerfilePath}"
+
                     // Build Docker image with 'latest' tag and version tag
                     echo "Building Docker image with tags: latest, version-${newVersion}, ${commitHash}"
-                    sh "ls -la"
-                    sh "docker build -t ${env.IMAGE_NAME}:latest -t ${env.IMAGE_NAME}:version-${newVersion} -t ${env.IMAGE_NAME}:${commitHash} ."
+                    sh "docker build -t ${env.IMAGE_NAME}:latest -t ${env.IMAGE_NAME}:version-${newVersion} -t ${env.IMAGE_NAME}:${commitHash} -f ${dockerfilePath} ."
                 }
             }
         }
