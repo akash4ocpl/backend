@@ -22,9 +22,24 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
+                    // Get the current commit hash
                     def commitHash = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
-                    def previousVersion = sh(script: "docker images ${env.IMAGE_NAME} --format '{{.Tag}}' | grep -E '^version-' | sort -r | head -1 | awk -F '-' '{print \$2}'", returnStdout: true).trim()
-                    def newVersion = (previousVersion.isInteger() ? previousVersion.toInteger() + 1 : 1)
+                    echo "Commit Hash: ${commitHash}"
+
+                    // Get the previous version
+                    def previousVersion = sh(script: """
+                        docker images ${env.IMAGE_NAME} --format '{{.Tag}}' | grep -E '^version-' | sort -r | head -1 | awk -F '-' '{print \$2}'
+                    """, returnStdout: true).trim()
+                    echo "Previous Version: ${previousVersion}"
+
+                    // Determine the new version
+                    def newVersion
+                    if (previousVersion.isInteger()) {
+                        newVersion = previousVersion.toInteger() + 1
+                    } else {
+                        newVersion = 1
+                    }
+                    echo "New Version: ${newVersion}"
 
                     // Build Docker image with 'latest' tag and version tag
                     sh "docker build -t ${env.IMAGE_NAME}:latest -t ${env.IMAGE_NAME}:version-${newVersion} -t ${env.IMAGE_NAME}:${commitHash} ."
