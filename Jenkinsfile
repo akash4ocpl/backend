@@ -14,7 +14,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 script {
-                    git credentialsId: env.GITHUB_CREDENTIALS_ID, url: 'https://github.com/akash4ocpl/backend.git'
+                    git branch: 'main', credentialsId: env.GITHUB_CREDENTIALS_ID, url: 'https://github.com/akash4ocpl/backend.git'
                 }
             }
         }
@@ -71,9 +71,12 @@ pipeline {
 
     post {
         always {
-            sh "docker rmi ${env.IMAGE_NAME}:latest || true"
-            sh "docker rmi ${env.IMAGE_NAME}:${commitHash} || true"
-            sh "docker rmi ${env.IMAGE_NAME}:version-${newVersion} || true"
+            script {
+                // Safely remove images if they exist
+                sh "docker rmi ${env.IMAGE_NAME}:latest || true"
+                sh "docker rmi ${env.IMAGE_NAME}:${commitHash} || true"
+                sh "docker rmi ${env.IMAGE_NAME}:version-${newVersion} || true"
+            }
         }
     }
 }
