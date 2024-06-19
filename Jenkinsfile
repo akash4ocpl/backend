@@ -54,13 +54,23 @@ pipeline {
         stage('Push Docker Image') {
             steps {
                 script {
-                    withDockerRegistry([credentialsId: env.DOCKER_CREDENTIALS_ID, url: '']) {
+                    // Login to DockerHub using credentials
+                    withCredentials([usernamePassword(credentialsId: '1234567890987654321', passwordVariable: 'OcplTech666@', usernameVariable: 'akash4ocpl')]) {
+                        sh 'echo OcplTech666@ | docker login -u akash4ocpl --password-stdin'
+                    }
+                    // Push the Docker image to DockerHub
                         sh "docker push ${env.IMAGE_NAME}:latest"
                         sh "docker push ${env.IMAGE_NAME}:version-${newVersion}"
                         sh "docker push ${env.IMAGE_NAME}:${commitHash}"
-                    }
                 }
-            }
+            //     script {
+            //         withDockerRegistry([credentialsId: env.DOCKER_CREDENTIALS_ID]) {
+            //             sh "docker push ${env.IMAGE_NAME}:latest"
+            //             sh "docker push ${env.IMAGE_NAME}:version-${newVersion}"
+            //             sh "docker push ${env.IMAGE_NAME}:${commitHash}"
+            //         }
+            //     }
+            // }
         }
 
         stage('Deploy to Kubernetes') {
