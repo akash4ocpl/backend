@@ -9,6 +9,7 @@ pipeline {
         GITHUB_CREDENTIALS_ID = '1234567890987654321' // GitHub credentials ID
         KUBECONFIG_CREDENTIALS_ID = 'kubeconfig-credentials' // ID used in Jenkins
         NAMESPACE = 'backend' // Kubernetes namespace
+    }
 
     stages {
         stage('Checkout') {
@@ -48,9 +49,33 @@ pipeline {
                     echo "Building Docker image with tags: latest, version-${newVersion}, ${commitHash}"
                     sh "docker build -t ${env.IMAGE_NAME}:latest -t ${env.IMAGE_NAME}:version-${newVersion} -t ${env.IMAGE_NAME}:${commitHash} ."
 
-                    // Set newVersion environment variable to be used in the next stages
+                    // Set newVersion and commitHash environment variables to be used in the next stages
                     env.NEW_VERSION = newVersion.toString()
-                    env.COMMIT_HASH = commitHash.toString()
+                    env.COMMIT_HASH = commitHash
+                }
+            }
+        }
+
+        stage('Push Docker Image') {
+            steps {
+                script {
+                    try {
+                        // Login to DockerHub using credentials
+                        withCredentials([usernamePassword(credentialsId: env.DOCKER_CREDENTIALS_ID, passwordVariable: 'DOCKERHUB_PASSWORD', usernameVariable: 'DOCKERHUB_USERNAME')]) {
+                            sh 'echo $DOCKERHUB_PASSWORD | docker login -u $DOCKERHUB_USERNAME --password-stdin'
+                        }
+                        echo "Docker login successful"
+
+                        // Push the Docker image to DockerHub
+                        sh "docker push ${env.IMAGE_NAME}:latest"
+                        sh "docker push ${env.IMAGE_NAME}:version-${env.NEW_VERSION}"
+                        sh "docker push ${env.IMAGE_NAME}:${env.COMMIT_HASH}"
+
+                        echo "Docker images pushed successfully"
+                    } catch (Exception e) {
+                        echo "Error during Docker image push: ${e.message}"
+                        throw e
+                    }
                 }
             }
         }
@@ -70,8 +95,8 @@ pipeline {
 
                         // Apply Kubernetes deployment and service files
                         sh """
-                        kubectl apply -f deployment.yml
-                        kubectl apply -f service.yml
+                        kubectl apply -f deployment.yml -n ${env.NAMESPACE}
+                        kubectl apply -f service.yml -n ${env.NAMESPACE}
                         """
                     }
                 }
@@ -95,7 +120,7 @@ pipeline {
             script {
                 // Safely remove images if they exist
                 sh "docker rmi ${env.IMAGE_NAME}:latest || true"
-                sh "docker rmi ${env.IMAGE_NAME}:${commitHash} || true"
+                sh "docker rmi ${env.IMAGE_NAME}:${env.COMMIT_HASH} || true"
                 sh "docker rmi ${env.IMAGE_NAME}:version-${env.NEW_VERSION} || true"
             }
         }
