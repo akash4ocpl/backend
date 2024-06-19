@@ -54,19 +54,27 @@ pipeline {
         stage('Push Docker Image') {
             steps {
                 script {
-                    // Login to DockerHub using credentials
-                    sh 'echo "work done till here"'
-                    withCredentials([usernamePassword(credentialsId: env.DOCKER_CREDENTIALS_ID, passwordVariable: 'DOCKERHUB_PASSWORD', usernameVariable: 'DOCKERHUB_USERNAME')]) {
-                        sh 'echo $DOCKERHUB_PASSWORD | docker login -u $DOCKERHUB_USERNAME --password-stdin'
+                    try {
+                        // Login to DockerHub using credentials
+                        withCredentials([usernamePassword(credentialsId: env.DOCKER_CREDENTIALS_ID, passwordVariable: 'DOCKERHUB_PASSWORD', usernameVariable: 'DOCKERHUB_USERNAME')]) {
+                            sh 'echo $DOCKERHUB_PASSWORD | docker login -u $DOCKERHUB_USERNAME --password-stdin'
+                        }
+                        echo "Docker login successful"
+
+                        // Push the Docker image to DockerHub
+                        sh "docker push ${env.IMAGE_NAME}:latest"
+                        sh "docker push ${env.IMAGE_NAME}:version-${newVersion}"
+                        sh "docker push ${env.IMAGE_NAME}:${commitHash}"
+
+                        echo "Docker images pushed successfully"
+                    } catch (Exception e) {
+                        echo "Error during Docker image push: ${e.message}"
+                        throw e
                     }
-                    // Push the Docker image to DockerHub
-                    sh "docker push ${env.IMAGE_NAME}:latest"
-                    sh "docker push ${env.IMAGE_NAME}:version-${newVersion}"
-                    sh "docker push ${env.IMAGE_NAME}:${commitHash}"
-                    sh 'echo "work done till here"'
                 }
             }
         }
+
 
         stage('Deploy to Kubernetes') {
             steps {
